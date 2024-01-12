@@ -31,13 +31,11 @@ def get_data_split_by_staves(path, base_folder, reduce_ratio=0.8):
     X = []
     BboxesY = []
     all_seqs = []
-    outliers = 0
     with open(path) as txtpath:
         samples = txtpath.readlines()
         for sample in progress.track(samples):
             sample = sample.replace('\n', '')
             with open(f"{base_folder}/gt/{sample}", "r") as jsoncontent:
-                prevy0 = 0
                 data = json.load(jsoncontent)
                 image = data["filename"]
                 erase = False
@@ -51,13 +49,6 @@ def get_data_split_by_staves(path, base_folder, reduce_ratio=0.8):
                             y0 = region['bounding_box']["fromY"] - page["bounding_box"]["fromY"]
                             w = region['bounding_box']["toX"] - region['bounding_box']["fromY"]
                             h = region['bounding_box']["toY"] - region['bounding_box']["fromY"]
-                            if prevy0 > y0:
-                                print("Unordered staves")
-                                print(y0)
-                                print(prevy0)
-                                import sys
-                                sys.exit()
-                            prevy0 = y0
 
                             bboxes.append([x0, y0, w, h])
                             if "symbols" not in region:
@@ -82,8 +73,7 @@ def get_data_split_by_staves(path, base_folder, reduce_ratio=0.8):
                         width = bb["toX"] - bb["fromX"]
                         if width > 600:
                             img = img[30:img.shape[0]-60, (img.shape[1]//2)+25:img.shape[1]-60]
-                            cv2.imwrite(f"outlier_{path.split('/')[-1][:-3]}_{outliers}.jpg", img)
-                            outliers += 1
+                            
                         width = int(np.ceil(img.shape[1] * reduce_ratio))
                         height = int(np.ceil(img.shape[0] * reduce_ratio))
                         img = cv2.resize(img, (width, height))
@@ -181,7 +171,7 @@ class FPOMRDataset_VAN(Dataset):
            x = convert_to_tensor_format(x)
            X_train = x
         
-        L_train = (X_train.shape[2] // 2)
+        L_train = (X_train.shape[2] // 8)
                
         Y_train = []
         T_train = []

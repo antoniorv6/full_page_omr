@@ -5,6 +5,22 @@ import torch.nn as nn
 import torch.nn.functional as F
 import random
 from torchinfo import summary
+from torch.nn.init import zeros_, ones_, kaiming_uniform_
+
+def VAN_Weight_Init(m):
+    """
+    Weights initialization for model training from scratch
+    """
+    if isinstance(m, nn.Conv2d) or isinstance(m, nn.Linear):
+        if m.weight is not None:
+            kaiming_uniform_(m.weight, nonlinearity="relu")
+        if m.bias is not None:
+            zeros_(m.bias)
+    elif isinstance(m, nn.InstanceNorm2d):
+        if m.weight is not None:
+            ones_(m.weight)
+        if m.bias is not None:
+            zeros_(m.bias)
 
 class DepthSepConv2D(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size, activation=None, padding=True, stride=(1,1), dilation=(1,1)):
@@ -129,8 +145,8 @@ class Encoder(nn.Module):
         self.conv_blocks = nn.ModuleList([
             ConvBlock(in_c=in_channels, out_c=16, stride=(1,1), dropout=dropout),
             ConvBlock(in_c=16, out_c=32, stride=(2,2), dropout=dropout),
-            ConvBlock(in_c=32, out_c=64, stride=(2,1), dropout=dropout),
-            ConvBlock(in_c=64, out_c=128, stride=(2,1), dropout=dropout),
+            ConvBlock(in_c=32, out_c=64, stride=(2,2), dropout=dropout),
+            ConvBlock(in_c=64, out_c=128, stride=(2,2), dropout=dropout),
             ConvBlock(in_c=128, out_c=128, stride=(2,1), dropout=dropout),
             ConvBlock(in_c=128, out_c=128, stride=(2,1), dropout=dropout),
         ])
@@ -293,6 +309,7 @@ class VAN(nn.Module):
 def get_VAN_model(min_width, encoder_features, attention_fc_size, attention_hidden, decoder_size, out_cats, input_channels=3):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     van_model = VAN(input_channels, min_width, encoder_features, attention_fc_size, attention_hidden, decoder_size, out_cats, device).to(device)
+    van_model.apply(VAN_Weight_Init)
     summary(van_model, input_size=[(1,input_channels,1418,922)], dtypes=[torch.float])
     return van_model, device
 

@@ -9,7 +9,7 @@ from lightning.pytorch.loggers import WandbLogger
 
 def main(dataset_path, fold):
     dataset_name = dataset_path.split("/")[-1]
-    train_ds, val_ds, test_ds = load_dataset(base_folder=dataset_path, fold=fold, ratio=1.0)
+    train_ds, val_ds, test_ds = load_dataset(base_folder=dataset_path, fold=fold, ratio=0.8)
 
     req_iterations = max(train_ds.get_length() + val_ds.get_length() + test_ds.get_length())
 
@@ -23,14 +23,14 @@ def main(dataset_path, fold):
 
     model = get_VAN(i2w=train_ds.i2w, max_iterations=req_iterations)
 
-    #wandb_logger = WandbLogger(project='Full_Page_OMR', group=dataset_name, name=f"VAN_fold_{fold}", log_model=False)
+    wandb_logger = WandbLogger(project='Full_Page_OMR', group=dataset_name, name=f"VAN_fold_{fold}_arale", log_model=False)
 
     checkpointer = ModelCheckpoint(dirpath=f"weights/{dataset_name}/VAN/", filename=f"VAN_fold_{fold}", 
                                    monitor="val_SER", mode='min',
                                    save_top_k=1, verbose=True)
 
-    #trainer = Trainer(max_epochs=5000, check_val_every_n_epoch=5, logger=wandb_logger, callbacks=[checkpointer])
-    trainer = Trainer(max_epochs=5000, check_val_every_n_epoch=5, callbacks=[checkpointer])
+    trainer = Trainer(max_epochs=5000, check_val_every_n_epoch=5, logger=wandb_logger, callbacks=[checkpointer])
+    #trainer = Trainer(max_epochs=5000, check_val_every_n_epoch=5, callbacks=[checkpointer])
 
 
     trainer.fit(model, train_dataloader, val_dataloader)
