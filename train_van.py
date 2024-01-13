@@ -9,7 +9,7 @@ from lightning.pytorch.loggers import WandbLogger
 
 def main(dataset_path, fold):
     dataset_name = dataset_path.split("/")[-1]
-    train_ds, val_ds, test_ds = load_dataset(base_folder=dataset_path, fold=fold, ratio=0.8)
+    train_ds, val_ds, test_ds = load_dataset(base_folder=dataset_path, fold=fold, ratio=1.0)
 
     req_iterations = max(train_ds.get_length() + val_ds.get_length() + test_ds.get_length())
 
